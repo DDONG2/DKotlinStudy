@@ -4,6 +4,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import com.example.dkotlinstudy.NetWorkUtil.PersonFromServer
+import com.example.dkotlinstudy.NetWorkUtil.RetrofitClient
 import com.example.dkotlinstudy.NetWorkUtil.RetrofitService
 import com.example.dkotlinstudy.RoomUtil.RoomDataBase
 import com.example.dkotlinstudy.RoomUtil.UserDao
@@ -29,16 +30,25 @@ class MainActivity : AppCompatActivity() {
         Thread(insertMemo).start()
 
         //Retorfit 예제
-        //http://mellowcode.org/json/students/
-        val retrofit = Retrofit.Builder()
-            .baseUrl("http://mellowcode.org/")
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
+        RetorfitTest1()
+        RetorfitTest2()
+        RetorfitTest3()
+    }
 
-        val service = retrofit.create(RetrofitService::class.java)
+    private fun accessDatabase() {
+        val userDatabase = RoomDataBase.getInstance(this)!!
+        mUserDao = userDatabase.userDao()
+    }
 
+    private val insertMemo = Runnable {
+        var newUser = UserEntity("김똥깨", "20", "010-1111-5555")
+        mUserDao.insert(newUser)
+    }
+
+    fun RetorfitTest1() {
         //get 요청
-        service.getSuedentList().enqueue(object : Callback<ArrayList<PersonFromServer>> {
+        val client = RetrofitClient.get().getSuedentList()
+        client.enqueue(object : Callback<ArrayList<PersonFromServer>> {
             override fun onResponse(
                 call: Call<ArrayList<PersonFromServer>>,
                 response: Response<ArrayList<PersonFromServer>>
@@ -63,14 +73,17 @@ class MainActivity : AppCompatActivity() {
 
             }
         })
+    }
 
+    fun RetorfitTest2() {
         //post 요청  (HashMap)
         val params = HashMap<String, Any>()
         params.put("name", "김개똥")
         params.put("age", "김개똥")
         params.put("intro", "안녕하세요")
 
-        service.createStudent(params).enqueue(object : Callback<PersonFromServer> {
+        val client = RetrofitClient.get().createStudent(params)
+        client.enqueue(object : Callback<PersonFromServer> {
             override fun onResponse(
                 call: Call<PersonFromServer>,
                 response: Response<PersonFromServer>
@@ -79,17 +92,19 @@ class MainActivity : AppCompatActivity() {
                     val person = response.body()
                     Log.d("retrofit_Success_post", "post : " + person?.name)
 
-                }            }
+                }
+            }
 
             override fun onFailure(call: Call<PersonFromServer>, t: Throwable) {
             }
         })
+    }
 
-
+    fun RetorfitTest3() {
         //post 요청2 (객체)
         val person = PersonFromServer(name = "김철수", age = 12, intro = "안녕하세요 김철수 입니다.")
-
-        service.createStudentEasy(person).enqueue(object : Callback<PersonFromServer> {
+        val client3 = RetrofitClient.get().createStudentEasy(person)
+        client3.enqueue(object : Callback<PersonFromServer> {
             override fun onResponse(
                 call: Call<PersonFromServer>,
                 response: Response<PersonFromServer>
@@ -98,26 +113,12 @@ class MainActivity : AppCompatActivity() {
                     val person = response.body()
                     Log.d("retrofit_Success_post", "post : " + person?.name)
 
-                }            }
+                }
+            }
 
             override fun onFailure(call: Call<PersonFromServer>, t: Throwable) {
             }
         })
-
-
-
-
-
-
     }
 
-    private fun accessDatabase() {
-        val userDatabase = RoomDataBase.getInstance(this)!!
-        mUserDao = userDatabase.userDao()
-    }
-
-    private val insertMemo = Runnable {
-        var newUser = UserEntity("김똥깨", "20", "010-1111-5555")
-        mUserDao.insert(newUser)
-    }
 }
